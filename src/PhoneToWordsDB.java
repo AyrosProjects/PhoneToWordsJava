@@ -16,7 +16,6 @@ public class PhoneToWordsDB
 		try
 		{
 			Scanner s = new Scanner(new File(dict));
-			ArrayList<String> words = new ArrayList<String>();
 
 			PhoneToWordsDB db = new PhoneToWordsDB();
 			while (s.hasNextLine())
@@ -48,6 +47,8 @@ public class PhoneToWordsDB
 					db.map.put(num, wordList);
 				}
 			}
+			
+			s.close();
 
 			return db;
 		}
@@ -69,6 +70,18 @@ public class PhoneToWordsDB
 		word = word.replace('w', '9').replace('x', '9').replace('y', '9').replace('z', '9');
 
 		return word;
+	}
+
+	public List<String> getWords(String number)
+	{
+		if (map.containsKey(number))
+		{
+			return map.get(number);
+		}
+		else
+		{
+			return null;
+		}
 	}
 
 	@Override
