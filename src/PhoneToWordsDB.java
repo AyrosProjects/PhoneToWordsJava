@@ -1,6 +1,9 @@
-import java.io.*;
-import java.lang.*;
-import java.util.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 public class PhoneToWordsDB
 {
@@ -17,45 +20,66 @@ public class PhoneToWordsDB
 		{
 			Scanner s = new Scanner(new File(dict));
 
-			PhoneToWordsDB db = new PhoneToWordsDB();
+			List<String> words = new ArrayList<String>();
 			while (s.hasNextLine())
 			{
-				String word = s.nextLine().toLowerCase();
-				char[] letters = word.toCharArray();
-				for (int i = word.length() - 1; i >= 0; i--)
-				{
-					if (letters[i] < 'a' || letters[i] > 'z')
-					{
-						word = word.replace(Character.toString(letters[i]), "");
-					}
-				}
-
-				String num = wordToNums(word);
-
-				if (db.map.containsKey(num))
-				{
-					if (!db.map.get(num).contains(num))
-					{
-						db.map.get(num).add(word);
-					}
-				}
-				else
-				{
-					ArrayList<String> wordList = new ArrayList<String>();
-					wordList.add(word);
-
-					db.map.put(num, wordList);
-				}
+				words.add(s.nextLine());
 			}
-			
+
 			s.close();
 
-			return db;
+			String[] wordArray = new String[words.size()];
+			words.toArray(wordArray);
+
+			return fromWordList(wordArray);
 		}
 		catch (Exception e)
 		{
 			return null;
 		}
+	}
+
+	public static PhoneToWordsDB fromWordList(String[] words)
+	{
+		PhoneToWordsDB db = new PhoneToWordsDB();
+
+		for (String word : words)
+		{
+			word = word.toLowerCase();
+
+			char[] letters = word.toCharArray();
+			for (int i = word.length() - 1; i >= 0; i--)
+			{
+				if (letters[i] < 'a' || letters[i] > 'z')
+				{
+					word = word.replace(Character.toString(letters[i]), "");
+				}
+			}
+
+			if (word.isEmpty())
+			{
+				continue;
+			}
+
+			String num = wordToNums(word);
+
+			if (db.map.containsKey(num))
+			{
+				if (!db.map.get(num).contains(num))
+				{
+					db.map.get(num).add(word);
+				}
+			}
+			else
+			{
+				ArrayList<String> wordList = new ArrayList<String>();
+				wordList.add(word);
+
+				db.map.put(num, wordList);
+			}
+		}
+
+		return db;
 	}
 
 	private static String wordToNums(String word)
