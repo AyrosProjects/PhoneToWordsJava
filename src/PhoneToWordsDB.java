@@ -1,4 +1,8 @@
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -82,6 +86,29 @@ public class PhoneToWordsDB
 		return db;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static PhoneToWordsDB fromExported(byte[] bytes)
+	{
+		PhoneToWordsDB db = new PhoneToWordsDB();
+
+		try
+		{
+			ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+	        ObjectInputStream ois = new ObjectInputStream(bis);
+	        
+	        Map<String, ArrayList<String>> map = (Map<String, ArrayList<String>>)ois.readObject();
+	        db.map = map;
+	        
+	        ois.close();
+	        
+			return db;
+		}
+		catch (Exception e)
+		{
+			return null;
+		}
+	}
+
 	private static String wordToNums(String word)
 	{
 		word = word.replace('a', '2').replace('b', '2').replace('c', '2');
@@ -94,6 +121,25 @@ public class PhoneToWordsDB
 		word = word.replace('w', '9').replace('x', '9').replace('y', '9').replace('z', '9');
 
 		return word;
+	}
+
+	public byte[] exportToBytes()
+	{
+		try
+		{
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream oos = new ObjectOutputStream(bos);
+			oos.writeObject(map);
+			byte[] data = bos.toByteArray();
+
+			oos.close();
+
+			return data;
+		}
+		catch (Exception e)
+		{
+			return null;
+		}
 	}
 
 	public List<String> getWords(String number)
