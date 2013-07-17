@@ -1,22 +1,23 @@
+package com.ayros.phonetowordsjava;
+
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.BufferedOutputStream;
 import java.util.List;
-import java.util.ArrayList;
 
 public class TestJava
 {
 	public static void main(String[] args)
 	{
-		PhoneToWordsDB db = PhoneToWordsDB.fromDictionary("..\\src\\dictionary.txt");
+		PhoneToWordsDB db = PhoneToWordsDB.fromDictionary("test/resources/dictionary.txt");
 
 		byte[] serializedDB = db.exportToBytes();
 
-		writeBytesToFile("ptw.db", serializedDB);
+		writeBytesToFile("test/resources/ptw.db", serializedDB);
 
-		serializedDB = readBytesFromFile("ptw.db");
-		
+		serializedDB = readBytesFromFile("test/resources/ptw.db");
+
 		db = PhoneToWordsDB.fromExported(serializedDB);
 		PhoneToWords ptw = new PhoneToWords(db, 1);
 
@@ -57,9 +58,9 @@ public class TestJava
 			byte[] fileData = new byte[(int)inFile.length()];
 			FileInputStream fis = new FileInputStream(inFile);
 			fis.read(fileData);
-			
+
 			fis.close();
-			
+
 			return fileData;
 		}
 		catch (Exception e)
