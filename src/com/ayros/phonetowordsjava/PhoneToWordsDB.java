@@ -13,30 +13,37 @@ import java.util.Scanner;
 
 public class PhoneToWordsDB
 {
-	Map<String, ArrayList<String>> map = new HashMap<String, ArrayList<String>>();
-
+	static char[] digitLookup;
+	
+	Map<String, ArrayList<String>> map;
+	
 	private PhoneToWordsDB()
 	{
-
+		this(0);
 	}
-
+	
+	private PhoneToWordsDB(int initialCapacity)
+	{
+		map = new HashMap<String, ArrayList<String>>(initialCapacity);
+	}
+	
 	public static PhoneToWordsDB fromDictionary(String dict)
 	{
 		try
 		{
 			Scanner s = new Scanner(new File(dict));
-
+			
 			List<String> words = new ArrayList<String>();
 			while (s.hasNextLine())
 			{
 				words.add(s.nextLine());
 			}
-
+			
 			s.close();
-
+			
 			String[] wordArray = new String[words.size()];
 			words.toArray(wordArray);
-
+			
 			return fromWordList(wordArray);
 		}
 		catch (Exception e)
@@ -44,15 +51,52 @@ public class PhoneToWordsDB
 			return null;
 		}
 	}
-
+	
+	/**
+	 * Used to read in a list of words with maximal performance. Assumes:
+	 * 1.) Words are separated by \n
+	 * 2.) Words are all lowercase
+	 * 3.) There are no duplicates
+	 */
+	public static PhoneToWordsDB fromProcessedWordList(String words, int initialCap)
+	{
+		PhoneToWordsDB db = new PhoneToWordsDB(initialCap);
+		
+		int posStart = 0;
+		while (true)
+		{
+			int posEnd = words.indexOf('\n', posStart);
+			if (posEnd <= 0)
+			{
+				break;
+			}
+			
+			String word = words.substring(posStart, posEnd);
+			
+			String digits = wordToNums(word);
+			
+			ArrayList<String> digitWords = db.map.get(digits);
+			if (digitWords == null)
+			{
+				digitWords = new ArrayList<String>();
+				db.map.put(digits, digitWords);
+			}
+			digitWords.add(word);
+			
+			posStart = posEnd + 1;
+		}
+		
+		return db;
+	}
+	
 	public static PhoneToWordsDB fromWordList(String[] words)
 	{
 		PhoneToWordsDB db = new PhoneToWordsDB();
-
+		
 		for (String word : words)
 		{
 			word = word.toLowerCase();
-
+			
 			char[] letters = word.toCharArray();
 			for (int i = word.length() - 1; i >= 0; i--)
 			{
@@ -61,14 +105,14 @@ public class PhoneToWordsDB
 					word = word.replace(Character.toString(letters[i]), "");
 				}
 			}
-
+			
 			if (word.isEmpty())
 			{
 				continue;
 			}
-
+			
 			String num = wordToNums(word);
-
+			
 			if (db.map.containsKey(num))
 			{
 				if (!db.map.get(num).contains(num))
@@ -80,29 +124,29 @@ public class PhoneToWordsDB
 			{
 				ArrayList<String> wordList = new ArrayList<String>();
 				wordList.add(word);
-
+				
 				db.map.put(num, wordList);
 			}
 		}
-
+		
 		return db;
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	public static PhoneToWordsDB fromExported(byte[] bytes)
 	{
 		PhoneToWordsDB db = new PhoneToWordsDB();
-
+		
 		try
 		{
 			ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-	        ObjectInputStream ois = new ObjectInputStream(bis);
-	        
-	        Map<String, ArrayList<String>> map = (Map<String, ArrayList<String>>)ois.readObject();
-	        db.map = map;
-	        
-	        ois.close();
-	        
+			ObjectInputStream ois = new ObjectInputStream(bis);
+			
+			Map<String, ArrayList<String>> map = (Map<String, ArrayList<String>>)ois.readObject();
+			db.map = map;
+			
+			ois.close();
+			
 			return db;
 		}
 		catch (Exception e)
@@ -110,21 +154,64 @@ public class PhoneToWordsDB
 			return null;
 		}
 	}
-
+	
 	private static String wordToNums(String word)
 	{
-		word = word.replace('a', '2').replace('b', '2').replace('c', '2');
-		word = word.replace('d', '3').replace('e', '3').replace('f', '3');
-		word = word.replace('g', '4').replace('h', '4').replace('i', '4');
-		word = word.replace('j', '5').replace('k', '5').replace('l', '5');
-		word = word.replace('m', '6').replace('n', '6').replace('o', '6');
-		word = word.replace('p', '7').replace('q', '7').replace('r', '7').replace('s', '7');
-		word = word.replace('t', '8').replace('u', '8').replace('v', '8');
-		word = word.replace('w', '9').replace('x', '9').replace('y', '9').replace('z', '9');
-
-		return word;
+		if (digitLookup == null)
+		{
+			digitLookup = new char[256];
+			for (int i = 0; i < digitLookup.length; i++)
+			{
+				char c = (char)i;
+				
+				if (c == 'a' || c == 'b' || c == 'c')
+				{
+					digitLookup[i] = '2';
+				}
+				else if (c == 'd' || c == 'e' || c == 'f')
+				{
+					digitLookup[i] = '3';
+				}
+				else if (c == 'g' || c == 'h' || c == 'i')
+				{
+					digitLookup[i] = '4';
+				}
+				else if (c == 'j' || c == 'k' || c == 'l')
+				{
+					digitLookup[i] = '5';
+				}
+				else if (c == 'm' || c == 'n' || c == 'o')
+				{
+					digitLookup[i] = '6';
+				}
+				else if (c == 'p' || c == 'q' || c == 'r' || c == 's')
+				{
+					digitLookup[i] = '7';
+				}
+				else if (c == 't' || c == 'u' || c == 'v')
+				{
+					digitLookup[i] = '8';
+				}
+				else if (c == 'w' || c == 'x' || c == 'y' || c == 'z')
+				{
+					digitLookup[i] = '9';
+				}
+				else
+				{
+					digitLookup[i] = ' ';
+				}
+			}
+		}
+		
+		char[] digits = new char[word.length()];
+		for (int i = 0; i < word.length(); i++)
+		{
+			digits[i] = digitLookup[(int)word.charAt(i)];
+		}
+		
+		return new String(digits);
 	}
-
+	
 	public byte[] exportToBytes()
 	{
 		try
@@ -133,9 +220,9 @@ public class PhoneToWordsDB
 			ObjectOutputStream oos = new ObjectOutputStream(bos);
 			oos.writeObject(map);
 			byte[] data = bos.toByteArray();
-
+			
 			oos.close();
-
+			
 			return data;
 		}
 		catch (Exception e)
@@ -143,7 +230,7 @@ public class PhoneToWordsDB
 			return null;
 		}
 	}
-
+	
 	public List<String> getWords(String number)
 	{
 		if (map.containsKey(number))
@@ -155,22 +242,22 @@ public class PhoneToWordsDB
 			return null;
 		}
 	}
-
+	
 	@Override
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder();
-
+		
 		for (Map.Entry<String, ArrayList<String>> entry : map.entrySet())
 		{
 			sb.append(entry.getKey() + ":\n");
-
+			
 			for (String word : entry.getValue())
 			{
 				sb.append("    " + word + "\n");
 			}
 		}
-
+		
 		return sb.toString();
 	}
 }
